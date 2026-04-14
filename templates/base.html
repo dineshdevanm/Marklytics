@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Data Dashboard</title>
+    <title>Marklytics Student Marks Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <nav class="navbar">
-        <h2>Data Dashboard</h2>
+        <h2>Marklytics Student Marks Dashboard</h2>
         <div class="nav-links">
             {% if session.get('user_id') %}
                 <span>Welcome, {{ session.username }}</span>

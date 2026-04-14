@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from pymongo import MongoClient
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -9,6 +11,17 @@ import base64
 
 app = Flask(__name__)
 app.secret_key = '8f42a73054b17afec2284c1ce7161b34c281df6f4b62db1895a62e5b4b1a2e3a'
+
+# --- EMAIL CONFIGURATION ---
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'dineshdevan@student.tce.edu' # Replace with your Gmail
+app.config['MAIL_PASSWORD'] = 'ssbg wqqb uniz ixvg' # Replace with your App Password (see instructions below)
+app.config['MAIL_DEFAULT_SENDER'] = 'dineshdevan@student.tce.edu'
+
+mail = Mail(app)
+s = URLSafeTimedSerializer(app.secret_key) # For generating secure email tokens
 
 client = MongoClient('mongodb://localhost:27017/')
 db = client['student_dashboard_db']
@@ -123,27 +136,70 @@ def home():
 def register():
     if request.method == 'POST':
         username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        if users_collection.find_one({'username': username}):
-            flash('Username already exists!')
+        
+        if users_collection.find_one({'$or': [{'username': username}, {'email': email}]}):
+            flash('Username or Email already exists!', 'error')
             return redirect(url_for('register'))
+            
         hashed_password = generate_password_hash(password)
-        users_collection.insert_one({'username': username, 'password': hashed_password})
-        flash('Registration successful! Please login.')
+        
+        # Save user as NOT verified yet
+        users_collection.insert_one({
+            'username': username, 
+            'email': email, 
+            'password': hashed_password,
+            'is_verified': False
+        })
+        
+        # Generate Secure Token
+        token = s.dumps(email, salt='email-confirm')
+        confirm_url = url_for('confirm_email', token=token, _external=True)
+        
+        # Send Email
+        html_msg = f"<h3>Welcome {username}!</h3><p>Please click the link below to verify your account:</p><a href='{confirm_url}'>Verify My Account</a>"
+        msg = Message("Confirm Your Dashboard Account", recipients=[email], html=html_msg)
+        mail.send(msg)
+        
+        flash('Registration successful! Please check your Gmail to verify your account before logging in.', 'info')
         return redirect(url_for('login'))
+        
     return render_template('register.html')
+
+@app.route('/confirm_email/<token>')
+def confirm_email(token):
+    try:
+        # Token expires in 1 hour (3600 seconds)
+        email = s.loads(token, salt='email-confirm', max_age=3600)
+    except SignatureExpired:
+        flash('The confirmation link has expired. Please register again.', 'error')
+        return redirect(url_for('register'))
+    except Exception:
+        flash('The confirmation link is invalid.', 'error')
+        return redirect(url_for('login'))
+        
+    users_collection.update_one({'email': email}, {'$set': {'is_verified': True}})
+    flash('Your account has been verified! You can now log in.', 'success')
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
-        user = users_collection.find_one({'username': username})
+        user = users_collection.find_one({'email': email})
+        
         if user and check_password_hash(user['password'], password):
+            if not user.get('is_verified', False):
+                flash('Please check your email and verify your account first.', 'error')
+                return redirect(url_for('login'))
+                
             session['user_id'] = str(user['_id'])
             session['username'] = user['username']
             return redirect(url_for('dashboard'))
-        flash('Invalid credentials!')
+            
+        flash('Invalid email or password!', 'error')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -228,7 +284,7 @@ def dashboard():
         cursor = data_collection.find(query)
         df = pd.DataFrame(list(cursor))
         if not df.empty:
-            gpa_chart = generate_gpa_chart(df, f"Global Search: Batch {batch_q} | Year {year_q} | Sec {section_q}")
+            gpa_chart = generate_gpa_chart(df, f"Batch {batch_q} | Year {year_q} | Sec {section_q}")
             course_charts = generate_course_charts(df)
             slow_learners, fast_learners = get_learner_categories(df)
         else:

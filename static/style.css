@@ -129,6 +129,7 @@ label {
 
 input[type="text"], 
 input[type="password"], 
+input[type="email"], 
 input[type="file"] {
     width: 100%;
     padding: 0.75rem 1rem;
@@ -144,7 +145,8 @@ input[type="file"] {
 }
 
 input[type="text"]:focus, 
-input[type="password"]:focus {
+input[type="password"]:focus,
+input[type="email"]:focus {
     outline: none;
     border-color: var(--primary);
     background-color: var(--bg-surface);

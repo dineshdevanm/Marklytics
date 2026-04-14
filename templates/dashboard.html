@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="search-section card">
-    <h3>Global Search Data Visualizations</h3>
+    <h3>Search Charts and Other Visualizations</h3>
     <form method="GET" action="{{ url_for('dashboard') }}" class="search-form">
         <input type="text" name="batch" placeholder="Batch (e.g. 2025)">
         <input type="text" name="year" placeholder="Year (e.g. 3)">
@@ -13,14 +13,14 @@
 {% if gpa_chart %}
 <div class="chart-section">
     {% if recent_labels %}
-    <h2>Community's Most Recent Upload</h2>
+    <h2>Most Recent Upload</h2>
     <div class="label-container">
         <span class="label-badge">Batch: {{ recent_labels.batch }}</span>
         <span class="label-badge">Year: {{ recent_labels.year }}</span>
         <span class="label-badge">Section: {{ recent_labels.section }}</span>
     </div>
     {% else %}
-    <h2>Global Search Result Analysis</h2>
+    <h2>Search Result Analysis</h2>
     {% endif %}
 
     <div class="chart-card">

@@ -61,6 +61,14 @@ pip install -r requirements.txt
 python app.py
 ```
 
+Alternative (Flask CLI):
+
+```powershell
+$env:FLASK_APP = "app.py"
+$env:FLASK_ENV = "development"
+flask run
+```
+
 The app will run at:
 
 `http://127.0.0.1:5000`
@@ -91,10 +99,38 @@ Only the first 40 rows are processed.
 - If MongoDB is not running, login/register and upload operations will fail.
 - If charts do not render, ensure all plotting dependencies are installed from `requirements.txt`.
 - If Excel upload fails, confirm `openpyxl` is installed.
+- If `python app.py` exits with an error, run `pip install -r requirements.txt` again and verify MongoDB is running.
+
+## Environment Variables (Recommended)
+
+For production use, move sensitive settings to environment variables.
+
+- `FLASK_SECRET_KEY`: Flask session secret key
+- `MONGO_URI`: MongoDB connection string
+
+Current defaults in code:
+
+- Secret key is hardcoded in `app.py`
+- Mongo URI is `mongodb://localhost:27017/`
+
+## GitHub Upload
+
+To push this project to GitHub manually:
+
+```powershell
+git init
+git branch -M main
+git add .
+git commit -m "Initial commit"
+git remote add origin https://github.com/<your-username>/Marklytics.git
+git push -u origin main
+```
+
+If the repository already exists locally, skip `git init`.
 
 ## Security Note
 
-The current app contains a hardcoded Flask secret key in `app.py`. For production, move secrets to environment variables.
+The current app contains a hardcoded Flask secret key in `app.py`. Use environment variables before deploying.
 
 ## License
 
