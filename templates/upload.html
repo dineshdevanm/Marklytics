@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="upload-section">
+    <h3>Upload Excel/CSV File</h3>
+    <form method="POST" enctype="multipart/form-data" class="form-container">
+        <label>Batch:</label>
+        <input type="text" name="batch" placeholder="e.g. 2025" required>
+        <label>Year:</label>
+        <input type="text" name="year" placeholder="e.g. 3" required>
+        <label>Section:</label>
+        <input type="text" name="section" placeholder="e.g. A" required>
+        <label>File:</label>
+        <input type="file" name="dataFile" accept=".csv, .xlsx" required>
+        <button type="submit" class="btn">Upload & Generate</button>
+    </form>
+</div>
+
+{% if success %}
+<div class="chart-section mt-2">
+    <h2>Data Extracted Successfully!</h2>
+    
+    <div class="chart-card">
+        <h3>Overall Semester GPA</h3>
+        <img src="data:image/png;base64,{{ gpa_chart }}" alt="Generated Chart">
+        <br>
+        <a href="data:image/png;base64,{{ gpa_chart }}" download="gpa_chart.png" class="btn">Download Chart</a>
+    </div>
+
+    <h2 style="margin-top: 30px; text-align: center;">Subject-Wise Breakdown</h2>
+    <div class="course-grid">
+        {% for course_chart in course_charts %}
+        <div class="chart-card">
+            <img src="data:image/png;base64,{{ course_chart }}" alt="Course Specific Chart">
+            <br>
+            <a href="data:image/png;base64,{{ course_chart }}" download="course_chart.png" class="btn mt-2">Download Chart</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h2 style="margin-top: 40px; text-align: center;">Student Academic Tracking (Based on CGPA)</h2>
+    <div class="learner-container">
+        <div class="chart-card">
+            <h3 style="color: #4CAF50;">Fast Learners (CGPA ≥ 9.0)</h3>
+            <p>Total count: {{ fast_learners|length }}</p>
+            {% if fast_learners %}
+            <table class="learner-table">
+                <tr class="fast-header"><th>Reg. No</th><th>Name</th><th>GPA</th><th>CGPA</th></tr>
+                {% for student in fast_learners %}
+                <tr><td>{{ student.reg_no }}</td><td>{{ student.name }}</td><td>{{ student.gpa }}</td><td><strong>{{ student.cgpa }}</strong></td></tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p>No students found in this category.</p>
+            {% endif %}
+        </div>
+
+        <div class="chart-card">
+            <h3 style="color: #F44336;">Students Needing Attention (CGPA ≤ 6.5)</h3>
+            <p>Total count: {{ slow_learners|length }}</p>
+            {% if slow_learners %}
+            <table class="learner-table">
+                <tr class="slow-header"><th>Reg. No</th><th>Name</th><th>GPA</th><th>CGPA</th></tr>
+                {% for student in slow_learners %}
+                <tr><td>{{ student.reg_no }}</td><td>{{ student.name }}</td><td>{{ student.gpa }}</td><td><strong>{{ student.cgpa }}</strong></td></tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <p>No students found in this category.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
